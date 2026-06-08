@@ -8,7 +8,8 @@ const productRoutes = require('./routes/productRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const AppError = require('./utils/AppError');
 
-const clerkMiddleware = process.env.CLERK_PUBLISHABLE_KEY
+const clerkEnabled = process.env.CLERK_SECRET_KEY || process.env.CLERK_PUBLISHABLE_KEY;
+const clerkMiddleware = clerkEnabled
   ? require('@clerk/express').clerkMiddleware
   : null;
 
