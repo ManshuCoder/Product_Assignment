@@ -21,6 +21,16 @@ Steps — Web dashboard (recommended)
    - `CLERK_SECRET_KEY` — only if you use Clerk
    - `NODE_ENV=production`
 
+   Copy/paste checklist for Railway variables:
+```text
+MONGODB_URI=mongodb+srv://<DB_USER>:<DB_PASSWORD>@<CLUSTER_HOST>/<DB_NAME>?retryWrites=true&w=majority
+JWT_SECRET=<strong-random-secret>
+CLIENT_URL=https://<your-frontend-domain>
+API_URL=https://<your-railway-backend-domain>
+CLERK_SECRET_KEY=<your-clerk-secret-key>
+NODE_ENV=production
+```
+
 5. Deploy. Railway will build the project and run `npm start`.
 
 Steps — Railway CLI (alternative)

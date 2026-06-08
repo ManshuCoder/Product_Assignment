@@ -42,6 +42,7 @@ Secrets and security
 
 Deployment notes
 - Ensure `MONGODB_URI` is provided in the environment where the app runs.
+- The backend reads `CLERK_SECRET_KEY` for Clerk middleware, so keep that exact variable name in Railway or your host.
 - In production set `NODE_ENV=production` and keep `JWT_SECRET` secure.
 
 Support
