@@ -45,7 +45,11 @@ const Login = () => {
       login(res.data.data.user, res.data.data.token);
       navigate('/products');
     } catch (err) {
-      setApiError(err.response?.data?.message || 'Login failed. Please try again.');
+      const message = err.response?.data?.message
+        || (err.message === 'Network Error'
+          ? 'Cannot reach the API. Check that the backend is running and CORS is configured.'
+          : 'Login failed. Please try again.');
+      setApiError(message);
     } finally {
       setLoading(false);
     }

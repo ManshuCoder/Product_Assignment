@@ -17,6 +17,7 @@ Steps — Web dashboard (recommended)
    - `MONGODB_URI` — your MongoDB Atlas connection string
    - `JWT_SECRET` — a strong secret
    - `CLIENT_URL` — e.g., `https://your-frontend-url` (or http://localhost:5174 for local testing)
+         - `CLIENT_URLS` — optional comma-separated allowlist if you need more than one frontend origin
    - `API_URL` — can be the Railway service URL (set after first deploy) or `http://localhost:5000` for local dev
    - `CLERK_SECRET_KEY` — only if you use Clerk
    - `NODE_ENV=production`
@@ -26,6 +27,7 @@ Steps — Web dashboard (recommended)
 MONGODB_URI=mongodb+srv://<DB_USER>:<DB_PASSWORD>@<CLUSTER_HOST>/<DB_NAME>?retryWrites=true&w=majority
 JWT_SECRET=<strong-random-secret>
 CLIENT_URL=https://<your-frontend-domain>
+CLIENT_URLS=https://<your-frontend-domain>
 API_URL=https://<your-railway-backend-domain>
 CLERK_SECRET_KEY=<your-clerk-secret-key>
 NODE_ENV=production
@@ -64,6 +66,8 @@ Troubleshooting
 - Connection/auth errors: confirm `MONGODB_URI` is correct and Atlas has your Railway IP allowed (or set IP 0.0.0.0/0 for testing).
 - DNS SRV issues: try a non-SRV connection string if your environment cannot resolve SRV records.
 - Env variables not present: ensure the service is redeployed after updating variables.
+- CORS / login or signup always fails from Vercel: the frontend `vercel.json` proxies `/api` to your Render/Railway backend (same-origin, no CORS). Redeploy the Vercel app after pulling latest code. Remove any Vercel env var `VITE_API_URL` pointing directly at Render (or set it to `/api`). On the backend, set `CLIENT_URLS` to your Vercel URL if you still call the API cross-origin.
+- Clerk 500 errors on Render/Railway: only set `CLERK_SECRET_KEY` and `CLERK_PUBLISHABLE_KEY` together. If you use JWT auth only, remove both Clerk keys from the backend.
 
 Security reminder
 - Do not commit `.env` or secrets. Use Railway environment variables.

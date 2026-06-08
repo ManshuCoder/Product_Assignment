@@ -1,6 +1,23 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const normalizeApiUrl = (url) => {
+  if (!url || url === '/api') return '/api';
+
+  const trimmed = url.replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+};
+
+const resolveApiUrl = () => {
+  // Production uses same-origin /api (proxied to Render via vercel.json) — avoids CORS entirely.
+  if (import.meta.env.PROD) return '/api';
+
+  const envUrl = import.meta.env.VITE_API_URL?.trim();
+  if (envUrl) return normalizeApiUrl(envUrl);
+
+  return '/api';
+};
+
+const API_URL = resolveApiUrl();
 
 const api = axios.create({
   baseURL: API_URL,

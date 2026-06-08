@@ -46,7 +46,11 @@ const Signup = () => {
       login(res.data.data.user, res.data.data.token);
       navigate('/products');
     } catch (err) {
-      setApiError(err.response?.data?.message || 'Signup failed. Please try again.');
+      const message = err.response?.data?.message
+        || (err.message === 'Network Error'
+          ? 'Cannot reach the API. Check that the backend is running and CORS is configured.'
+          : 'Signup failed. Please try again.');
+      setApiError(message);
     } finally {
       setLoading(false);
     }

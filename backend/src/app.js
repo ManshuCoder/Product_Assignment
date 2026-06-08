@@ -8,17 +8,47 @@ const productRoutes = require('./routes/productRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const AppError = require('./utils/AppError');
 
-const clerkEnabled = process.env.CLERK_SECRET_KEY || process.env.CLERK_PUBLISHABLE_KEY;
+const clerkEnabled = process.env.CLERK_SECRET_KEY && process.env.CLERK_PUBLISHABLE_KEY;
 const clerkMiddleware = clerkEnabled
   ? require('@clerk/express').clerkMiddleware
   : null;
 
 const app = express();
 
-const allowedOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || 'http://localhost:5174')
+const originConfig = (process.env.CLIENT_URLS || process.env.CLIENT_URL || 'http://localhost:5174')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+const exactOrigins = originConfig.filter((origin) => !origin.includes('*'));
+const originPatterns = originConfig
+  .filter((origin) => origin.includes('*'))
+  .map((pattern) => {
+    const regexSource = pattern
+      .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+      .replace(/\\\*/g, '[^/]*');
+    return new RegExp(`^${regexSource}$`, 'i');
+  });
+
+const allowsVercelDeployments = exactOrigins.some((origin) => /\.vercel\.app$/i.test(origin));
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+
+  if (exactOrigins.includes(origin)) return true;
+  if (originPatterns.some((pattern) => pattern.test(origin))) return true;
+
+  if (allowsVercelDeployments && /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) {
+    return true;
+  }
+
+  if (process.env.NODE_ENV === 'production' && /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) {
+    return true;
+  }
+
+  const isLocalhostOrigin = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+  return process.env.NODE_ENV !== 'production' && isLocalhostOrigin;
+};
 
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000,
@@ -36,16 +66,7 @@ app.use(limiter);
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) {
-        return callback(null, true);
-      }
-
-      const isLocalhostOrigin = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
-      if (allowedOrigins.includes(origin) || (process.env.NODE_ENV !== 'production' && isLocalhostOrigin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+      callback(null, isOriginAllowed(origin));
     },
     credentials: true,
   })
