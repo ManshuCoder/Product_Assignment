@@ -14,31 +14,10 @@ const clerkMiddleware = process.env.CLERK_PUBLISHABLE_KEY
 
 const app = express();
 
-const normalizeOrigin = (origin) => {
-  if (!origin) return null;
-  if (/^https?:\/\//i.test(origin)) return origin.trim();
-  return `https://${origin.trim()}`;
-};
-
-const allowedOrigins = new Set(
-  [
-    process.env.CLIENT_URL,
-    process.env.CLIENT_URLS,
-    process.env.FRONTEND_URL,
-    process.env.FRONTEND_URLS,
-    process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`,
-    process.env.NETLIFY_URL && `https://${process.env.NETLIFY_URL}`,
-  ]
-    .filter(Boolean)
-    .flatMap((value) => String(value).split(','))
-    .map((origin) => normalizeOrigin(origin))
-    .filter(Boolean)
-);
-
-allowedOrigins.add('http://localhost:5173');
-allowedOrigins.add('http://localhost:5174');
-allowedOrigins.add('http://127.0.0.1:5173');
-allowedOrigins.add('http://127.0.0.1:5174');
+const allowedOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || 'http://localhost:5174')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000,
@@ -61,7 +40,7 @@ app.use(
       }
 
       const isLocalhostOrigin = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
-      if (allowedOrigins.has(origin) || (process.env.NODE_ENV !== 'production' && isLocalhostOrigin)) {
+      if (allowedOrigins.includes(origin) || (process.env.NODE_ENV !== 'production' && isLocalhostOrigin)) {
         return callback(null, true);
       }
 
