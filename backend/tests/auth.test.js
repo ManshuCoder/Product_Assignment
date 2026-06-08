@@ -1,6 +1,7 @@
 require('./setup');
 const request = require('supertest');
 const app = require('../src/app');
+const User = require('../src/models/User');
 
 describe('Auth API', () => {
   const user = {
@@ -56,6 +57,29 @@ describe('Auth API', () => {
         .send({ email: user.email, password: 'wrongpassword' });
 
       expect(res.status).toBe(401);
+    });
+
+    it('should login and upgrade a legacy plaintext password', async () => {
+      const legacyUser = {
+        name: 'Legacy User',
+        email: 'legacy@example.com',
+        password: 'legacyPass123',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await User.collection.insertOne(legacyUser);
+
+      const res = await request(app)
+        .post('/api/auth/login')
+        .send({ email: legacyUser.email, password: legacyUser.password });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.token).toBeDefined();
+
+      const stored = await User.findOne({ email: legacyUser.email }).select('+password');
+      expect(stored.password).not.toBe(legacyUser.password);
+      expect(stored.password).toMatch(/^\$2[aby]\$\d{2}\$/);
     });
   });
 });

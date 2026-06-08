@@ -4,6 +4,8 @@ const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess } = require('../utils/apiResponse');
 
+const isBcryptHash = (value) => typeof value === 'string' && /^\$2[aby]\$\d{2}\$/.test(value);
+
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
@@ -31,6 +33,12 @@ const login = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email: normalizedEmail }).select('+password');
   if (!user || !(await user.comparePassword(password))) {
     throw new AppError('Invalid email or password', 401);
+  }
+
+  if (!isBcryptHash(user.password)) {
+    user.password = password;
+    user.markModified('password');
+    await user.save();
   }
 
   const token = signToken(user._id);

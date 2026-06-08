@@ -28,6 +28,8 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const isBcryptHash = (value) => typeof value === 'string' && /^\$2[aby]\$\d{2}\$/.test(value);
+
 userSchema.pre('save', async function hashPassword(next) {
   if (!this.isModified('password')) return next();
 
@@ -37,6 +39,10 @@ userSchema.pre('save', async function hashPassword(next) {
 });
 
 userSchema.methods.comparePassword = async function comparePassword(candidate) {
+  if (!isBcryptHash(this.password)) {
+    return candidate === this.password;
+  }
+
   return bcrypt.compare(candidate, this.password);
 };
 
