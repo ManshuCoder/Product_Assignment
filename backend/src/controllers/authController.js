@@ -11,13 +11,14 @@ const signToken = (id) =>
 
 const signup = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
+  const normalizedEmail = email.trim().toLowerCase();
 
-  const existing = await User.findOne({ email });
+  const existing = await User.findOne({ email: normalizedEmail });
   if (existing) {
     throw new AppError('An account with this email already exists', 409);
   }
 
-  const user = await User.create({ name, email, password });
+  const user = await User.create({ name, email: normalizedEmail, password });
   const token = signToken(user._id);
 
   sendSuccess(res, 201, 'Account created successfully', { user, token });
@@ -25,8 +26,9 @@ const signup = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = email.trim().toLowerCase();
 
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({ email: normalizedEmail }).select('+password');
   if (!user || !(await user.comparePassword(password))) {
     throw new AppError('Invalid email or password', 401);
   }

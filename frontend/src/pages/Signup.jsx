@@ -26,8 +26,13 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const nameError = validateName(form.name);
-    const emailError = validateEmail(form.email);
+    const normalizedForm = {
+      ...form,
+      email: form.email.trim().toLowerCase(),
+    };
+
+    const nameError = validateName(normalizedForm.name);
+    const emailError = validateEmail(normalizedForm.email);
     const passwordError = validatePassword(form.password);
 
     if (nameError || emailError || passwordError) {
@@ -37,7 +42,7 @@ const Signup = () => {
 
     setLoading(true);
     try {
-      const res = await authAPI.signup(form);
+      const res = await authAPI.signup(normalizedForm);
       login(res.data.data.user, res.data.data.token);
       navigate('/products');
     } catch (err) {
